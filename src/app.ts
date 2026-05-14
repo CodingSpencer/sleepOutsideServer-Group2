@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import path from "path";
 import { fileURLToPath } from "url";
 import helmet from 'helmet';
@@ -24,14 +25,13 @@ app.use(express.json({ limit: '10kb' })); // To parse the incoming requests with
 // Set security HTTP headers
 // (Protects against XSS, sniffer attacks, etc.)
 app.use(helmet());
-
+app.use(cors());
 
 // Development logging
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-// Rate Limiting (Prevent Brute Force & DOS attacks)
 // Limits requests from the same IP
 const limiter = rateLimit({
   max: 100,
