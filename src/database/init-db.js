@@ -1,11 +1,9 @@
-// import MongoClient and ServerApiVersion from the mongodb library and import products from the products.js file.
+import * as argon2 from "argon2";
 import { MongoClient, ServerApiVersion } from "mongodb";
 import { products } from "./products.js";
 
-//build the uri for our connection string
 const uri = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@${process.env.MONGO_URI}`;
-console.log(uri);
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -13,29 +11,32 @@ const client = new MongoClient(uri, {
     deprecationErrors: true
   }
 });
+
 const init = async () => {
   try {
     await client.connect();
     console.log(`Connected to MongoDB`);
-    // get a reference to the actual database we will be using with .db(<database name>)
+
     const db = client.db(process.env.MONGO_DATABASE);
 
-    // initialize the Products collection
     await seedProducts(db);
+    await seedUsers(db);
+    await setupOrders(db);
+    await setupAlerts(db);
+
+    console.log("Database setup complete!");
   } catch (error) {
     console.error(error.message);
   } finally {
     await client.close();
   }
 };
-const lowerCaseKeys = function(obj) {
-  // if it is an object, but NOT an array, then we need to iterate through all of its keys
+
+const lowerCaseKeys = function (obj) {
   if (typeof obj === "object" && !Array.isArray(obj)) {
     for (let key in obj) {
-      // take the first letter (key[0]) of the key and make it lowercase
-      // then add that to the rest of the key after REMOVING the first letter (key.slice(1))
       let newKey = key[0].toLowerCase() + key.slice(1);
-      // if the value of this key is an object, then we need to call this function again
+
       if (typeof obj[key] === "object") {
         obj[newKey] = lowerCaseKeys(obj[key]);
         delete obj[key];
@@ -45,40 +46,101 @@ const lowerCaseKeys = function(obj) {
       }
     }
   } else if (Array.isArray(obj)) {
-    // if it is an array, then we need to iterate through each item in the array
-    // and for each object value call the function again.
     for (let i = 0; i < obj.length; i++) {
       let item = obj[i];
+
       if (typeof item === "object") {
         obj[i] = lowerCaseKeys(item);
       }
     }
   }
+
   return obj;
-}
+};
+
 const seedProducts = async (db) => {
-  // we need to make a small transform to the provided data before inserting
-  // use .map() to transform each product before inserting it into the database
-  // change Reviews.ReviewUrl to match the following pattern: /products/<productId>/reviews/
-  // while we are at it...the data provided used a PascalCase naming convention for its keys. Use the provided lowerCaseKeys function to convert all keys to camelCase. This will make it consistent with the rest of our models.
   const newProducts = products.map((product) => {
     product.Reviews.ReviewsUrl = `/products/${product.Id}/reviews/`;
     product = lowerCaseKeys(product);
     return product;
   });
+
   try {
-    // drop the collection to clear out the old records
-    await db.collection("products").drop();
-    console.log("Collection 'products' dropped successfully");
-    // create a new collection
+    await db.collection("products").drop().catch(() => {
+      console.log("No existing products collection to drop");
+    });
+
     await db.createCollection("products");
     console.log("Collection 'products' created successfully");
-    // insert all products
-    const result = await db.collection("products").insertMany(newProducts);
-    console.log(
-      `${result.insertedCount} new listing(s) created with the following id(s):`
-    );
-    console.log(result.insertedIds);
+
+    const productsCollection = db.collection("products");
+
+    const result = await productsCollection.insertMany(newProducts);
+
+    console.log(`${result.insertedCount} product(s) inserted`);
+
+    await productsCollection.createIndex({ name: 1 });
+    await productsCollection.createIndex({ descriptionHtmlSimple: 1 });
+    await productsCollection.createIndex({ category: 1 });
+    await productsCollection.createIndex({ id: 1 });
+
+    console.log("Product indexes created");
+  } catch (error) {
+    console.error(error.message);
+  }
+};
+
+const seedUsers = async (db) => {
+  try {
+    await db.collection("users").drop().catch(() => {
+      console.log("No existing users collection to drop");
+    });
+
+    await db.createCollection("users");
+    console.log("Collection 'users' created successfully");
+
+    const usersCollection = db.collection("users");
+
+    const hashedPassword = await argon2.hash("password");
+
+    await usersCollection.insertOne({
+      name: "Test User",
+      email: "test@test.com",
+      password_hash: hashedPassword,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    await usersCollection.createIndex({ name: 1 });
+    await usersCollection.createIndex({ email: 1 }, { unique: true });
+
+    console.log("Test user inserted and user indexes created");
+  } catch (error) {
+    console.error(error.message);
+  }
+};
+
+const setupOrders = async (db) => {
+  try {
+    await db.collection("orders").drop().catch(() => {
+      console.log("No existing orders collection to drop");
+    });
+
+    await db.createCollection("orders");
+    console.log("Collection 'orders' created successfully");
+  } catch (error) {
+    console.error(error.message);
+  }
+};
+
+const setupAlerts = async (db) => {
+  try {
+    await db.collection("alerts").drop().catch(() => {
+      console.log("No existing alerts collection to drop");
+    });
+
+    await db.createCollection("alerts");
+    console.log("Collection 'alerts' created successfully");
   } catch (error) {
     console.error(error.message);
   }

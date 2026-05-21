@@ -31,6 +31,12 @@ router.get("/", async (req, res, next) => {
     
   });
 
+router.get('/products', async (req, res) =>){
+  const {category, q, limit, offset, fields}
+  const products = await getAllProducts(req.query)
+}
+
+
   res.status(200).json(products);
 } catch (error) {
   next(error);
