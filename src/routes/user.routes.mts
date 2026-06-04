@@ -1,6 +1,7 @@
 import { Router } from "express";
 import userService from "../services/user.service.mts";
 import { sanitize } from "../services/utils.mts";
+import authorize from "../middleware/authorize.mts";
 
 const router = Router();
 
@@ -39,6 +40,25 @@ router.post("/login", async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+});
+
+router.post("/", async (req,res,next) => {
+    try {
+      const cleanBody = sanitize(req.body)
+    const {email, name, password} = cleanBody;
+
+    const newUser = await userService.register(email, password, name)
+    res.status(200).json({message:"User created successfully", userId: newUser.insertedId});
+    } catch(err) {
+        next(err);
+    }
+
+})
+
+// Protect a route with JWT authentication. Note the authorize middleware! Make sure to import it as well.
+router.get('/protected', authorize, (req, res) => {
+  console.log(res.locals.user);
+  res.json({ message: `Hello, ${res.locals.user.email}!` });
 });
 
 export default router;

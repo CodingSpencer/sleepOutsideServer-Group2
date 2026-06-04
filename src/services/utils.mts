@@ -36,7 +36,6 @@ export function formatFields(fields: string): Record<string, number> {
   return projectionObj;
 }
 
-// remember we created a QueryParams interface earlier in types.mts? Import it and use it here again
 export function buildPaginationWrapper(totalCount: number, query: QueryParams) {
   // here we check to see if there is a limit...if yes convert it to a number, if no set it to the default of 20
   const limit = query.limit ? parseInt(query.limit) : 20;
