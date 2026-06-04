@@ -11,11 +11,11 @@ import EntityNotFoundError from "../errors/EntityNotFoundError.mts";
 async function login(email:string, password:string) {
   // Check if the user exists in the database. the user will be providing an email as identifier...so we will need a function in the model to retrieve a user by email
   let user: User | null = null;
-  let token = null;
+  let token = null; 
     user = await userModel.getUserByEmail(email);
     // check to see if a user was found, ANd that the password provided matches the one returned from the database. Remember that the password in the database is hashed and salted...so we need to use argon2 to verify it "argon2.verify(password, passwordHash)"
     if (user) {
-      if (await argon2.verify(user.password, password)) {
+      if (await argon2.verify(user.password_hash, password)) {
         token = await generateToken(user);
       }
     }
