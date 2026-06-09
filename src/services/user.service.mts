@@ -32,7 +32,7 @@ async function register(email:string, password:string, name:string) {
   const hashedPassword = await argon2.hash(password);
   const newUser = {
     email,
-    password: hashedPassword,
+    password_hash: hashedPassword,
     name,
     createdAt: new Date(),
     modifiedAt: new Date(),

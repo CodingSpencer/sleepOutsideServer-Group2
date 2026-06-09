@@ -53,7 +53,7 @@ export interface Brand {
 export interface User {
   _id?: ObjectId;
   email: string;
-  password: string;
+  password_hash: string;
   name: string;
   address?: Address;
   phoneNumbers?: PhoneNumber[];
