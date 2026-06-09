@@ -54,25 +54,108 @@ export interface Brand {
 export interface User {
     _id?: ObjectId;
     email: string;
-    password: string;
-  name: string;
-  address?: Address;
-  phoneNumbers?: PhoneNumber[];
-  cart?: CartItem[];
-  createdAt: Date;
-  modifiedAt: Date;
-}
-
-export interface CartItem {
-  productId: string;
-  productName: string;
-  price: number;
-  finalPrice: number;
-  productImageSrc: string;
-  productUrl: string;
-  productCategory: string;
-  productColor: Color;
-  productSize: string;
+    password_hash: string;
+    name: string;
+    address?: Address;
+    phoneNumbers?: PhoneNumber[];
+    cart?: CartItem[];
+    createdAt: Date;
+    modifiedAt: Date;
+  }
+  
+  export interface Address {
+    street: string;
+    city: string;
+    state:
+      | "AL"
+      | "AK"
+      | "AZ"
+      | "AR"
+      | "CA"
+      | "CO"
+      | "CT"
+      | "DE"
+      | "DC"
+      | "FL"
+      | "GA"
+      | "HI"
+      | "ID"
+      | "IL"
+      | "IN"
+      | "IA"
+      | "KS"
+      | "KY"
+      | "LA"
+      | "ME"
+      | "MD"
+      | "MA"
+      | "MI"
+      | "MN"
+      | "MS"
+      | "MO"
+      | "MT"
+      | "NE"
+      | "NV"
+      | "NH"
+      | "NJ"
+      | "NM"
+      | "NY"
+      | "NC"
+      | "ND"
+      | "OH"
+      | "OK"
+      | "OR"
+      | "PA"
+      | "RI"
+      | "SC"
+      | "SD"
+      | "TN"
+      | "TX"
+      | "UT"
+      | "VT"
+      | "VA"
+      | "WA"
+      | "WV"
+      | "WI"
+      | "WY";
+    zipCode: string;
+    country: string;
+  }
+  
+  export interface PhoneNumber {
+    type: string;
+    number: string;
+  }
+  
+  export interface CartItem {
+    productId: string;
+    productName: string;
+    price: number;
+    finalPrice: number;
+    productImageSrc: string;
+    productUrl: string;
+    productCategory: string;
+    productColor: Color;
+    productSize: string;
+  }
+  
+  // Order schema
+  export interface Order {
+    _id: string;
+    userId: string;
+    name: string,
+    status: "pending" | "processing" | "shipped" | "delivered";
+    cardNumber: string;
+      cardExpiration: string;
+      cardCode: number;
+    shippingAddress: Address;
+    orderItems: CartItem[];
+    createdAt: Date;
+    modifiedAt: Date;
+    totalPrice: number;
+    shippingCost: number;
+    taxAmount: number;
+  }
   
 }
 
