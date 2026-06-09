@@ -1,56 +1,35 @@
 import productModel from "../models/product.model.mts";
-import type { Product, QueryParams, FindProductObj } from "../models/types.mts";
-import { formatFields, buildPaginationWrapper } from "./utils.mts";
+import type {Product, QueryParams, FindProductObj} from "../models/types.mts";
+import {buildPaginationWrapper, formatFields} from './utils.mts'
 
 
-//  const getAllProducts = async () => {
-//   return await productModel.getAllProducts();
-// };
+const getAllProducts = async (query:QueryParams) => {
+  let find:FindProductObj = {search: {},
+    limit: query.limit? parseInt(query.limit) : 20,
+    offset: query.offset? parseInt(query.offset) : 0
+  }
+  const {q, category, fields} = query; 
+    
+  find.fieldFilters = fields? formatFields(fields): undefined;
+  if(category) {
+      find.search.category = category;
+  }
+  if(q) {
+      find.search.name = q;
+      find.search.descriptionHtmlSimple = q;
+  }
+  // now that we know what we have send it to the model and get the results.
+  const data = await productModel.getAllProducts(find);
+  // take the results and format them correctly
+  const wrapper = buildPaginationWrapper(data.totalCount, query)
+  // don't forget to actually set the records in there.
+  wrapper.results = data.results
+  return wrapper
+};
 
 const getProductById = async (id: string) => {
   return await productModel.getProductById(id);
 };
-
-export async function getAllProducts(query: QueryParams) {
-  const limit = query.limit ? parseInt(query.limit, 10) : 20;
-  const offset = query.offset ? parseInt(query.offset, 10) : 0;
-
-  const findProduct: FindProductObj = {
-    search: {},
-    limit: limit,
-    offset: offset,
-  };
-
-  const {q, category, fields} = query;
-
-  if (query.category) {
-    findProduct.search.category = query.category as Product["category"];
-  }
-
-
-
-  if (query.q) {
-    (findProduct.search as any).$or = [
-      { name: { $regex: query.q, $options: "i" } },
-      { descriptionHtmlSimple: { $regex: query.q, $options: "i" } },
-    ];
-  }
-
-  if (query.category) {
-    findProduct.search.category = query.category;
-  }
-
-  if (query.fields) {
-    findProduct.fieldFilters = formatFields(query.fields);
-  }
-
-  const dbResult = await productModel.getAllProductsFromDb(findProduct);
-
-  const paginationWrapper = buildPaginationWrapper(dbResult.totalCount, query);
-  paginationWrapper.results = dbResult.products;
-
-  return paginationWrapper;
-}
 
 export default {
   getAllProducts,
