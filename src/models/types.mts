@@ -132,6 +132,7 @@ export interface FindProductObj {
     name?:string,
     descriptionHtmlSimple?:string,
     category?:string,
+    globalSearchTerm?:string,
   },
   limit: number,
   offset: number,
