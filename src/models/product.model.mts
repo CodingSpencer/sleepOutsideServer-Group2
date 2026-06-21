@@ -2,13 +2,6 @@ import mongodb from "../database/index.mts";
 import type {Product, FindProductObj} from "./types.mts";
 import { Collection } from "mongodb";
 
-
-// async function getAllProducts(): Promise<Product[] | null> {
-//     const data = (await mongodb.getDb().collection<Product>("products").find({}).toArray());
-//     console.log(data)
-//     return data ;
-// }
-
 // models/product.model.mts
 async function getProductById(id: string): Promise<Product | null> {
     const product = await mongodb.getDb().collection<Product>("products").findOne({id: id});
@@ -17,43 +10,39 @@ async function getProductById(id: string): Promise<Product | null> {
 
 export async function getAllProducts(find: FindProductObj) {
   const productsCollection:Collection<Product> = mongodb.getDb().collection<Product>('products');    
-  // get the total number of records matching our query
-  const totalCount = await productsCollection.countDocuments(find.search);
-// apply the filters to get the matching records
-  const cursor = await productsCollection.find(find.search).skip(find.offset).limit(find.limit);
-// if fields were specified then reduce the results to just the required fields
+
+  // Build MongoDB-specific query
+  let mongoQuery: any = {};
+
+  // Category was provided
+  if (find.search.category) {
+    mongoQuery.category = find.search.category;
+  }
+
+  // Product search was provided
+  if (find.search.globalSearchTerm) {
+    // Convert search term to case-insensitive regex
+    const searchRegex = new RegExp(find.search.globalSearchTerm, 'i');
+    mongoQuery.$or = [
+      { name: searchRegex },
+      { descriptionHtmlSimple: searchRegex },
+    ];
+  }
+
+  const totalCount = await productsCollection.countDocuments(mongoQuery);
+  const cursor = await productsCollection.find(mongoQuery).skip(find.offset).limit(find.limit);
+
   if(find.fieldFilters) {
     cursor.project(find.fieldFilters);
 }
+
 // finally convert the result to an array that we can consume
 const results = await cursor.toArray();
-console.log(totalCount, results)
-    return {results, totalCount};
+console.log("Found matching records count:", totalCount);
 
-
-  // const productsCollection: Collection<Product> =
-  //   mongodb.getDb().collection<Product>("products");
-
-  // const totalCount = await productsCollection.countDocuments(findObj.search);
-
-  // let cursor = productsCollection.find(findObj.search).skip(findObj.offset).limit(findObj.limit);
-
-  // if (
-  //   findObj.fieldFilters &&
-  //   Object.keys(findObj.fieldFilters).length > 0
-  // ) {
-  //   cursor = cursor.project(findObj.fieldFilters);
-  // }
-
-  // const products = await cursor.toArray();
-
-  // return {
-  //   totalCount,
-  //   products,
-  // };
+return {results, totalCount};
 }
 
-// don't forget to export the function
 export default {
   getAllProducts,
   getProductById

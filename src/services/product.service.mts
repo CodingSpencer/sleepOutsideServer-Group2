@@ -15,8 +15,8 @@ const getAllProducts = async (query:QueryParams) => {
       find.search.category = category;
   }
   if(q) {
-      find.search.name = q;
-      find.search.descriptionHtmlSimple = q;
+      const cleanQ = q.trim();
+      find.search.globalSearchTerm = cleanQ;
   }
   // now that we know what we have send it to the model and get the results.
   const data = await productModel.getAllProducts(find);
