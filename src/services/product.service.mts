@@ -31,7 +31,14 @@ const getProductById = async (id: string) => {
   return await productModel.getProductById(id);
 };
 
+export const getProductPrice = async (id: string): Promise<number | null> => {
+  const product = await productModel.getProductById(id);
+  // If the product exists, return its price; otherwise, return null (or 0)
+  return product ? product.listPrice : null;
+};
+
 export default {
   getAllProducts,
-  getProductById
+  getProductById,
+  getProductPrice
 };
